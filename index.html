@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SEQWHITE.STUDIO | 美甲記帳系統</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        studio: {
+                            bg: '#F9F9FB',
+                            card: '#FFFFFF',
+                            text: '#121212',
+                            subtext: '#6E6E73',
+                            border: '#E5E5EA',
+                            accent: '#000000',
+                            accentHover: '#2C2C2E',
+                            lightGray: '#F2F2F7',
+                            pill: '#E9E9EB'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #F9F9FB;
+            color: #121212;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* 隱藏滾動條但保持滾動能力 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 模態框動畫 */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 200ms, transform 200ms;
+        }
+        .modal-exit {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .modal-exit-active {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 150ms, transform 150ms;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen pb-12 antialiased selection:bg-black selection:text-white">
+
+    <!-- 頂部固定導覽列 (Top Quick Toolbar) -->
+    <header class="sticky top-0 z-30 bg-studio-bg/90 backdrop-blur-md border-b border-studio-border px-4 py-3">
+        <div class="max-w-md mx-auto flex flex-col gap-2">
+            <!-- 店名品牌 -->
+            <div class="flex justify-between items-center">
+                <h1 class="text-base tracking-[0.25em] font-semibold text-studio-text uppercase">
+                    SEQWHITE.STUDIO
+                </h1>
+                <span id="header-date" class="text-xs text-studio-subtext font-light"></span>
+            </div>
+
+            <!-- 三大功能頁面切換 -->
+            <nav class="grid grid-cols-3 gap-1 bg-studio-lightGray p-1 rounded-2xl text-xs font-medium">
+                <button id="nav-calendar" onclick="switchTab('calendar')" 
+                    class="tab-btn py-2 rounded-xl transition-all duration-200 bg-white text-black shadow-sm font-semibold">
+                    1. 月曆
+                </button>
+                <button id="nav-records" onclick="switchTab('records')" 
+                    class="tab-btn py-2 rounded-xl transition-all duration-200 text-studio-subtext hover:text-black">
+                    2. 總紀錄
+                </button>
+                <button id="nav-reports" onclick="switchTab('reports')" 
+                    class="tab-btn py-2 rounded-xl transition-all duration-200 text-studio-subtext hover:text-black">
+                    3. 報表
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="flex-grow max-w-md w-full mx-auto px-4 py-4">
+
+        <!-- ================= PAGE 1: 月曆 (預設頁面) ================= -->
+        <section id="page-calendar" class="space-y-4">
+            
+            <!-- 月曆切換標題區 -->
+            <div class="bg-studio-card rounded-3xl p-5 shadow-sm border border-studio-border">
+                <div class="flex items-center justify-between mb-4">
+                    <button onclick="changeMonth(-1)" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-studio-lightGray active:scale-95 transition">
+                        <i class="fa-solid font-bold fa-chevron-left text-xs"></i>
+                    </button>
+                    <div class="text-center">
+                        <h2 id="calendar-month-year" class="text-base font-semibold tracking-wide"></h2>
+                    </div>
+                    <button onclick="changeMonth(1)" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-studio-lightGray active:scale-95 transition">
+                        <i class="fa-solid font-bold fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- 星期表頭 -->
+                <div class="grid grid-cols-7 text-center mb-2">
+                    <span class="text-xs font-medium text-studio-subtext">日</span>
+                    <span class="text-xs font-medium text-studio-subtext">一</span>
+                    <span class="text-xs font-medium text-studio-subtext">二</span>
+                    <span class="text-xs font-medium text-studio-subtext">三</span>
+                    <span class="text-xs font-medium text-studio-subtext">四</span>
+                    <span class="text-xs font-medium text-studio-subtext">五</span>
+                    <span class="text-xs font-medium text-studio-subtext">六</span>
+                </div>
+
+                <!-- 日期網格 -->
+                <div id="calendar-days" class="grid grid-cols-7 gap-y-2 text-center text-sm font-medium">
+                    <!-- 由 JavaScript 動態繪製 -->
+                </div>
+            </div>
+
+            <!-- 當日紀錄顯示區 (圓角方框) -->
+            <div class="bg-studio-card rounded-3xl p-5 shadow-sm border border-studio-border min-h-[220px] flex flex-col justify-between">
+                <div>
+                    <!-- 選取日期區塊標題與新增按鈕 -->
+                    <div class="flex justify-between items-center mb-4 pb-2 border-b border-studio-border">
+                        <div>
+                            <span class="text-xs text-studio-subtext font-normal block">Selected Date</span>
+                            <span id="selected-date-title" class="text-sm font-semibold tracking-wide"></span>
+                        </div>
+                        <button onclick="openAddModal()" class="bg-black text-white px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 active:scale-95 transition hover:bg-studio-accentHover">
+                            <i class="fa-solid fa-plus text-[10px]"></i> 新增紀錄
+                        </button>
+                    </div>
+
+                    <!-- 當日紀錄列表 -->
+                    <div id="daily-records-list" class="space-y-3">
+                        <!-- 動態插入當日收支列表 -->
+                    </div>
+                </div>
+
+                <!-- 當日總計小計 -->
+                <div id="daily-summary" class="mt-4 pt-3 border-t border-studio-border flex justify-between items-center text-xs text-studio-subtext">
+                    <span>當日小計</span>
+                    <span id="daily-total-amount" class="text-sm font-bold text-studio-text">$0</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================= PAGE 2: 總紀錄 ================= -->
+        <section id="page-records" class="hidden space-y-4">
+            
+            <!-- 搜尋與統計 -->
+            <div class="bg-studio-card rounded-3xl p-4 shadow-sm border border-studio-border space-y-3">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-studio-subtext text-xs"></i>
+                    <input type="text" id="search-input" oninput="renderAllRecords()" placeholder="搜尋顧客姓名或項目..." 
+                        class="w-full bg-studio-lightGray pl-9 pr-4 py-2 rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-black">
+                </div>
+                
+                <div class="flex justify-between items-center text-xs px-1 text-studio-subtext">
+                    <span>總計筆數: <strong id="total-count-badge" class="text-black font-semibold">0</strong> 筆</span>
+                    <span>累計總收入: <strong id="total-amount-badge" class="text-black font-semibold">$0</strong></span>
+                </div>
+            </div>
+
+            <!-- 歷史紀錄總列表 -->
+            <div id="all-records-list" class="space-y-3">
+                <!-- 動態呈現全部紀錄 -->
+            </div>
+
+        </section>
+
+        <!-- ================= PAGE 3: 報表分析 ================= -->
+        <section id="page-reports" class="hidden space-y-4">
+            
+            <!-- 月份選擇與概覽卡片 -->
+            <div class="bg-studio-card rounded-3xl p-5 shadow-sm border border-studio-border space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-semibold tracking-wide">財務數據總覽</h3>
+                    <select id="report-month-select" onchange="renderReports()" class="bg-studio-lightGray text-xs rounded-xl px-3 py-1.5 font-medium outline-none">
+                        <!-- 動態填入月份 -->
+                    </select>
+                </div>
+
+                <!-- 核心 KPI 數字 -->
+                <div class="grid grid-cols-3 gap-2 text-center pt-2">
+                    <div class="bg-studio-lightGray/60 p-3 rounded-2xl">
+                        <span class="text-[10px] text-studio-subtext block mb-1">本月營收</span>
+                        <span id="report-month-revenue" class="text-sm font-bold">$0</span>
+                    </div>
+                    <div class="bg-studio-lightGray/60 p-3 rounded-2xl">
+                        <span class="text-[10px] text-studio-subtext block mb-1">服務人次</span>
+                        <span id="report-month-count" class="text-sm font-bold">0</span>
+                    </div>
+                    <div class="bg-studio-lightGray/60 p-3 rounded-2xl">
+                        <span class="text-[10px] text-studio-subtext block mb-1">平均客單價</span>
+                        <span id="report-avg-ticket" class="text-sm font-bold">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 熱門服務排名分析 -->
+            <div class="bg-studio-card rounded-3xl p-5 shadow-sm border border-studio-border">
+                <h3 class="text-sm font-semibold tracking-wide mb-3">熱門施作項目排行榜</h3>
+                <div id="service-popular-ranking" class="space-y-2.5">
+                    <!-- 動態渲染熱門項目長條圖 -->
+                </div>
+            </div>
+
+            <!-- 資料備份與匯入功能 -->
+            <div class="bg-studio-card rounded-3xl p-5 shadow-sm border border-studio-border space-y-3">
+                <h3 class="text-sm font-semibold tracking-wide">裝置資料備份 / 轉移</h3>
+                <p class="text-xs text-studio-subtext leading-relaxed">可將資料匯出備份，或在其他手機瀏覽器匯入紀錄以實現跨裝置匯入。</p>
+                
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button onclick="exportData()" class="border border-black text-black py-2 rounded-2xl text-xs font-medium active:scale-95 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-download"></i> 匯出備份 (JSON)
+                    </button>
+                    <label class="border border-studio-border bg-studio-lightGray text-black py-2 rounded-2xl text-xs font-medium cursor-pointer text-center flex items-center justify-center gap-1.5 active:scale-95 transition">
+                        <i class="fa-solid fa-upload"></i> 匯入備份
+                        <input type="file" id="import-file" accept=".json" onchange="importData(event)" class="hidden">
+                    </label>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ================= 新增 / 編輯紀錄 Modal 彈窗 ================= -->
+    <div id="record-modal" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar transform translate-y-4 transition-transform duration-200">
+            
+            <div class="flex justify-between items-center border-b border-studio-border pb-3">
+                <h3 id="modal-title" class="text-base font-semibold">新增預約收支紀錄</h3>
+                <button onclick="closeAddModal()" class="text-studio-subtext hover:text-black w-8 h-8 flex items-center justify-center rounded-full">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <form id="record-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                
+                <!-- 日期選擇 -->
+                <div>
+                    <label class="block text-xs font-medium text-studio-subtext mb-1">日期</label>
+                    <input type="date" id="form-date" required class="w-full bg-studio-lightGray px-3.5 py-2.5 rounded-2xl text-xs font-medium outline-none focus:ring-1 focus:ring-black">
+                </div>
+
+                <!-- 顧客姓名 -->
+                <div>
+                    <label class="block text-xs font-medium text-studio-subtext mb-1">顧客姓名</label>
+                    <input type="text" id="form-name" required placeholder="例如: 陳小姐 / Sally" class="w-full bg-studio-lightGray px-3.5 py-2.5 rounded-2xl text-xs outline-none focus:ring-1 focus:ring-black">
+                </div>
+
+                <!-- 項目快選 (13個指定內文選項) -->
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-xs font-medium text-studio-subtext">服務項目 (可多選)</label>
+                        <span class="text-[10px] text-studio-subtext">點擊標籤快速選取</span>
+                    </div>
+                    <div id="service-options-container" class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto no-scrollbar p-1 bg-studio-bg rounded-2xl border border-studio-border">
+                        <!-- 快選按鈕會由 JS 動態填入 -->
+                    </div>
+                </div>
+
+                <!-- 已選項目顯示 & 自訂項目輸入 -->
+                <div>
+                    <label class="block text-xs font-medium text-studio-subtext mb-1">已選項目細節</label>
+                    <input type="text" id="form-items-text" required placeholder="選擇上方標籤或自行輸入項目..." class="w-full bg-studio-lightGray px-3.5 py-2.5 rounded-2xl text-xs outline-none focus:ring-1 focus:ring-black">
+                </div>
+
+                <!-- 價格 -->
+                <div>
+                    <label class="block text-xs font-medium text-studio-subtext mb-1">總價格 ($)</label>
+                    <input type="number" id="form-price" required min="0" placeholder="0" class="w-full bg-studio-lightGray px-3.5 py-2.5 rounded-2xl text-xs font-semibold outline-none focus:ring-1 focus:ring-black">
+                </div>
+
+                <!-- 備註 -->
+                <div>
+                    <label class="block text-xs font-medium text-studio-subtext mb-1">備註 (可選)</label>
+                    <textarea id="form-notes" rows="2" placeholder="如：保養需求、款式顏色需求或備忘事項..." class="w-full bg-studio-lightGray px-3.5 py-2.5 rounded-2xl text-xs outline-none focus:ring-1 focus:ring-black resize-none"></textarea>
+                </div>
+
+                <!-- 提交按鈕 -->
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-black text-white py-3 rounded-2xl text-xs font-semibold tracking-wider active:scale-98 transition shadow-sm hover:bg-studio-accentHover">
+                        儲存紀錄
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- 全局提示 Toast Notification -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-black/90 text-white text-xs px-4 py-2.5 rounded-full shadow-lg opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-green-400"></i>
+        <span id="toast-msg">已完成操作</span>
+    </div>
+
+    <!-- JavaScript 業務邏輯與資料流控制 -->
+    <script>
+        // --- 預設13個服務內文選項 ---
+        const PRESET_SERVICES = [
+            { id: 1, name: "單色光療", defaultPrice: 0 },
+            { id: 2, name: "跳色搭配", defaultPrice: 0 },
+            { id: 3, name: "漸層設計", defaultPrice: 0 },
+            { id: 4, name: "貓眼系列", defaultPrice: 0 },
+            { id: 5, name: "極簡法式", defaultPrice: 0 },
+            { id: 6, name: "鏡面光感", defaultPrice: 0 },
+            { id: 7, name: "客製化款式", defaultPrice: 0 },
+            { id: 8, name: "足部單色", defaultPrice: 0 },
+            { id: 9, name: "延甲", defaultPrice: 0 },
+            { id: 10, name: "本店卸甲", defaultPrice: 200 },
+            { id: 11, name: "他店卸甲", defaultPrice: 300 },
+            { id: 12, name: "夜間服務", defaultPrice: 500 },
+            { id: 13, name: "手/腳基礎保養", defaultPrice: 0 }
+        ];
+
+        // --- 全局狀態 State ---
+        let records = JSON.parse(localStorage.getItem('seqwhite_records') || '[]');
+        let currentDate = new Date(); // 當前瀏覽的年月
+        let selectedDateStr = formatDate(new Date()); // 當前點選的日期 YYYY-MM-DD
+        let selectedPresetItems = []; // Modal 中已選擇的預設標籤
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            initPresetOptions();
+            updateHeaderDate();
+            renderCalendar();
+            renderDailyRecords();
+            renderAllRecords();
+            renderReports();
+        });
+
+        // 格式化日期 YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 格式化顯示用日期 (例如: 2023年10月24日 星期二)
+        function formatDisplayDate(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            const dateObj = new Date(y, parseInt(m) - 1, d);
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            return `${y}年${parseInt(m)}月${parseInt(d)}日 (週${weekDays[dateObj.getDay()]})`;
+        }
+
+        // 更新頁頭顯示
+        function updateHeaderDate() {
+            const today = new Date();
+            document.getElementById('header-date').innerText = `${today.getFullYear()}.${today.getMonth() + 1}.${today.getDate()}`;
+        }
+
+        // --- 頁面切換控制 Tab Navigation ---
+        function switchTab(tab) {
+            document.getElementById('page-calendar').classList.add('hidden');
+            document.getElementById('page-records').classList.add('hidden');
+            document.getElementById('page-reports').classList.add('hidden');
+
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+                btn.className = "tab-btn py-2 rounded-xl transition-all duration-200 text-studio-subtext hover:text-black";
+            });
+
+            const activeBtn = document.getElementById(`nav-${tab}`);
+            activeBtn.className = "tab-btn py-2 rounded-xl transition-all duration-200 bg-white text-black shadow-sm font-semibold";
+
+            if (tab === 'calendar') {
+                document.getElementById('page-calendar').classList.remove('hidden');
+                renderCalendar();
+                renderDailyRecords();
+            } else if (tab === 'records') {
+                document.getElementById('page-records').classList.remove('hidden');
+                renderAllRecords();
+            } else if (tab === 'reports') {
+                document.getElementById('page-reports').classList.remove('hidden');
+                renderReports();
+            }
+        }
+
+        // --- 頁面 1: 月曆邏輯 (Page 1 Calendar) ---
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            // 設置年月標題
+            document.getElementById('calendar-month-year').innerText = `${year} 年 ${month + 1} 月`;
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const daysContainer = document.getElementById('calendar-days');
+            daysContainer.innerHTML = '';
+
+            const todayStr = formatDate(new Date());
+
+            // 填補月初的空白天數
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "h-9";
+                daysContainer.appendChild(emptyCell);
+            }
+
+            // 繪製日期項目
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                const dayBtn = document.createElement('button');
+                dayBtn.className = "h-9 w-full flex flex-col items-center justify-center relative rounded-full transition-all";
+                
+                // 是否為點選日期、今日日期
+                const isSelected = (dayDateStr === selectedDateStr);
+                const isToday = (dayDateStr === todayStr);
+
+                // 檢查該日是否有紀錄 (顯示小點)
+                const hasRecord = records.some(r => r.date === dayDateStr);
+
+                // 根據需求規格：深色圓形預設顯示在當日，點選後移至選取日期
+                let circleClass = "";
+                let textClass = "text-studio-text";
+
+                if (isSelected) {
+                    // 點選的日期：深色圓形
+                    circleClass = "bg-black text-white shadow-sm font-semibold";
+                    textClass = "text-white";
+                } else if (isToday && selectedDateStr === todayStr) {
+                    // 未選擇其他天，且預設在當日
+                    circleClass = "bg-black text-white shadow-sm font-semibold";
+                    textClass = "text-white";
+                } else if (isToday) {
+                    // 今日但被選擇了別天：用細黑圈標示今日
+                    circleClass = "border border-black font-semibold";
+                }
+
+                dayBtn.onclick = () => {
+                    selectedDateStr = dayDateStr;
+                    renderCalendar();
+                    renderDailyRecords();
+                };
+
+                dayBtn.innerHTML = `
+                    <span class="w-7 h-7 flex items-center justify-center rounded-full text-xs ${circleClass} ${textClass}">
+                        ${day}
+                    </span>
+                    ${hasRecord && !isSelected ? '<span class="absolute bottom-1 w-1 h-1 bg-black rounded-full"></span>' : ''}
+                `;
+
+                daysContainer.appendChild(dayBtn);
+            }
+        }
+
+        // 渲染選定日期的收支紀錄
+        function renderDailyRecords() {
+            document.getElementById('selected-date-title').innerText = formatDisplayDate(selectedDateStr);
+            const dailyListContainer = document.getElementById('daily-records-list');
+            dailyListContainer.innerHTML = '';
+
+            // 篩選出選取日期的紀錄
+            const dailyRecords = records.filter(r => r.date === selectedDateStr);
+
+            let totalAmount = 0;
+
+            if (dailyRecords.length === 0) {
+                dailyListContainer.innerHTML = `
+                    <div class="py-8 text-center text-studio-subtext text-xs font-light space-y-1">
+                        <p>本日無收支紀錄</p>
+                        <p class="text-[10px] opacity-75">點擊右上角「+ 新增紀錄」添加顧客項目</p>
+                    </div>
+                `;
+            } else {
+                dailyRecords.forEach(record => {
+                    totalAmount += Number(record.price || 0);
+
+                    const card = document.createElement('div');
+                    card.className = "bg-studio-bg rounded-2xl p-3.5 flex justify-between items-start border border-studio-border/60 hover:border-studio-border transition";
+                    
+                    card.innerHTML = `
+                        <div class="space-y-1 pr-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold text-studio-text">${escapeHtml(record.name)}</span>
+                                <span class="text-[10px] bg-studio-pill px-2 py-0.5 rounded-full font-medium text-studio-subtext">
+                                    ${escapeHtml(record.items)}
+                                </span>
+                            </div>
+                            <div class="text-xs font-bold text-studio-text">
+                                $${Number(record.price).toLocaleString()}
+                            </div>
+                            ${record.notes ? `<p class="text-[11px] text-studio-subtext font-light italic">備註：${escapeHtml(record.notes)}</p>` : ''}
+                        </div>
+                        <button onclick="deleteRecord('${record.id}')" class="text-studio-subtext hover:text-red-500 p-1.5 transition active:scale-90" title="刪除紀錄">
+                            🗑️
+                        </button>
+                    `;
+                    dailyListContainer.appendChild(card);
+                });
+            }
+
+            document.getElementById('daily-total-amount').innerText = `$${totalAmount.toLocaleString()}`;
+        }
+
+        // --- 頁面 2: 總紀錄列表邏輯 (Page 2 All Records) ---
+        function renderAllRecords() {
+            const container = document.getElementById('all-records-list');
+            container.innerHTML = '';
+
+            const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+
+            // 篩選與排序 (依日期倒序)
+            let filtered = records.filter(r => 
+                r.name.toLowerCase().includes(keyword) || 
+                r.items.toLowerCase().includes(keyword)
+            ).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // 更新統計 Badge
+            const grandTotal = filtered.reduce((sum, r) => sum + Number(r.price || 0), 0);
+            document.getElementById('total-count-badge').innerText = filtered.length;
+            document.getElementById('total-amount-badge').innerText = `$${grandTotal.toLocaleString()}`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="py-12 text-center text-studio-subtext text-xs">
+                        尚未尋獲任何紀錄
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(record => {
+                const itemEl = document.createElement('div');
+                itemEl.className = "bg-studio-card rounded-2xl p-4 shadow-sm border border-studio-border flex justify-between items-center";
+                
+                itemEl.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold">${escapeHtml(record.name)}</span>
+                            <span class="text-[10px] text-studio-subtext">${record.date}</span>
+                        </div>
+                        <div class="text-xs text-studio-subtext">
+                            項目：<span class="text-studio-text font-medium">${escapeHtml(record.items)}</span>
+                        </div>
+                        ${record.notes ? `<div class="text-[11px] text-studio-subtext">備註：${escapeHtml(record.notes)}</div>` : ''}
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-bold">$${Number(record.price).toLocaleString()}</span>
+                        <button onclick="deleteRecord('${record.id}')" class="text-studio-subtext hover:text-red-500 transition active:scale-90" title="刪除">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                container.appendChild(itemEl);
+            });
+        }
+
+        // --- 頁面 3: 報表邏輯 (Page 3 Reports) ---
+        function renderReports() {
+            const selectEl = document.getElementById('report-month-select');
+            
+            // 抓取現有紀錄中的所有獨立月份 (YYYY-MM)
+            const monthsSet = new Set();
+            // 加入當月份
+            const currentYearMonth = formatDate(new Date()).substring(0, 7);
+            monthsSet.add(currentYearMonth);
+
+            records.forEach(r => {
+                if (r.date) monthsSet.add(r.date.substring(0, 7));
+            });
+
+            const sortedMonths = Array.from(monthsSet).sort().reverse();
+            
+            const currentSelected = selectEl.value || currentYearMonth;
+            selectEl.innerHTML = '';
+            sortedMonths.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = `${m.split('-')[0]} 年 ${m.split('-')[1]} 月`;
+                if (m === currentSelected) opt.selected = true;
+                selectEl.appendChild(opt);
+            });
+
+            const activeMonth = selectEl.value || currentYearMonth;
+
+            // 統計該月份數據
+            const monthRecords = records.filter(r => r.date && r.date.startsWith(activeMonth));
+            const totalRevenue = monthRecords.reduce((sum, r) => sum + Number(r.price || 0), 0);
+            const totalClients = monthRecords.length;
+            const avgTicket = totalClients > 0 ? Math.round(totalRevenue / totalClients) : 0;
+
+            document.getElementById('report-month-revenue').innerText = `$${totalRevenue.toLocaleString()}`;
+            document.getElementById('report-month-count').innerText = `${totalClients} 人`;
+            document.getElementById('report-avg-ticket').innerText = `$${avgTicket.toLocaleString()}`;
+
+            // 熱門施作項目分析
+            const serviceCounts = {};
+            monthRecords.forEach(r => {
+                // 拆解項目（可能為多選，以頓號或逗點分割）
+                const itemsList = r.items.split(/[,、]/).map(s => s.trim()).filter(Boolean);
+                itemsList.forEach(item => {
+                    serviceCounts[item] = (serviceCounts[item] || 0) + 1;
+                });
+            });
+
+            // 排序熱門項目
+            const sortedServices = Object.keys(serviceCounts)
+                .map(key => ({ name: key, count: serviceCounts[key] }))
+                .sort((a, b) => b.count - a.count);
+
+            const rankingContainer = document.getElementById('service-popular-ranking');
+            rankingContainer.innerHTML = '';
+
+            if (sortedServices.length === 0) {
+                rankingContainer.innerHTML = `<div class="text-center text-studio-subtext text-xs py-4">該月份無施作數據</div>`;
+            } else {
+                const maxCount = sortedServices[0].count || 1;
+                sortedServices.slice(0, 6).forEach(item => {
+                    const percentage = Math.round((item.count / maxCount) * 100);
+                    const row = document.createElement('div');
+                    row.className = "space-y-1";
+                    row.innerHTML = `
+                        <div class="flex justify-between text-xs font-medium">
+                            <span>${escapeHtml(item.name)}</span>
+                            <span class="text-studio-subtext">${item.count} 次</span>
+                        </div>
+                        <div class="w-full bg-studio-lightGray h-2 rounded-full overflow-hidden">
+                            <div class="bg-black h-full rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                        </div>
+                    `;
+                    rankingContainer.appendChild(row);
+                });
+            }
+        }
+
+        // --- 新增紀錄 Modal 邏輯與預設項目 quick-select ---
+        function initPresetOptions() {
+            const container = document.getElementById('service-options-container');
+            container.innerHTML = '';
+
+            PRESET_SERVICES.forEach(item => {
+                const pill = document.createElement('button');
+                pill.type = "button";
+                pill.className = "preset-pill text-xs px-2.5 py-1 rounded-xl bg-white border border-studio-border text-studio-text hover:bg-studio-lightGray transition active:scale-95";
+                pill.innerText = item.defaultPrice > 0 ? `${item.name} $${item.defaultPrice}` : item.name;
+                
+                pill.onclick = () => togglePresetSelection(item, pill);
+                container.appendChild(pill);
+            });
+        }
+
+        function togglePresetSelection(item, pillBtn) {
+            const index = selectedPresetItems.findIndex(p => p.id === item.id);
+            if (index > -1) {
+                // 解除選擇
+                selectedPresetItems.splice(index, 1);
+                pillBtn.className = "preset-pill text-xs px-2.5 py-1 rounded-xl bg-white border border-studio-border text-studio-text hover:bg-studio-lightGray transition active:scale-95";
+            } else {
+                // 選取
+                selectedPresetItems.push(item);
+                pillBtn.className = "preset-pill text-xs px-2.5 py-1 rounded-xl bg-black text-white border border-black transition active:scale-95 font-medium";
+            }
+
+            updateFormFromPresets();
+        }
+
+        function updateFormFromPresets() {
+            const itemsInput = document.getElementById('form-items-text');
+            const priceInput = document.getElementById('form-price');
+
+            // 組合名稱
+            const names = selectedPresetItems.map(i => i.name).join('、');
+            itemsInput.value = names;
+
+            // 計算預設加總價格
+            const presetTotalPrice = selectedPresetItems.reduce((sum, i) => sum + (i.defaultPrice || 0), 0);
+            if (presetTotalPrice > 0) {
+                priceInput.value = presetTotalPrice;
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById('form-date').value = selectedDateStr;
+            document.getElementById('form-name').value = '';
+            document.getElementById('form-items-text').value = '';
+            document.getElementById('form-price').value = '';
+            document.getElementById('form-notes').value = '';
+            selectedPresetItems = [];
+
+            // 重置預設標籤樣式
+            const pills = document.querySelectorAll('.preset-pill');
+            pills.forEach(p => {
+                p.className = "preset-pill text-xs px-2.5 py-1 rounded-xl bg-white border border-studio-border text-studio-text hover:bg-studio-lightGray transition active:scale-95";
+            });
+
+            const modal = document.getElementById('record-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+            }, 10);
+        }
+
+        function closeAddModal() {
+            const modal = document.getElementById('record-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        // 表單送出處理
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const newRecord = {
+                id: 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                date: document.getElementById('form-date').value,
+                name: document.getElementById('form-name').value.trim(),
+                items: document.getElementById('form-items-text').value.trim(),
+                price: Number(document.getElementById('form-price').value),
+                notes: document.getElementById('form-notes').value.trim(),
+                createdAt: new Date().toISOString()
+            };
+
+            records.push(newRecord);
+            saveRecords();
+
+            selectedDateStr = newRecord.date;
+            currentDate = new Date(newRecord.date);
+
+            closeAddModal();
+            renderCalendar();
+            renderDailyRecords();
+            renderAllRecords();
+            renderReports();
+
+            showToast("紀錄已新增成功");
+        }
+
+        // 刪除紀錄 (帶確認)
+        function deleteRecord(id) {
+            if (confirm("確定要刪除這筆收支紀錄嗎？刪除後無法恢復。")) {
+                records = records.filter(r => r.id !== id);
+                saveRecords();
+                
+                renderCalendar();
+                renderDailyRecords();
+                renderAllRecords();
+                renderReports();
+
+                showToast("紀錄已刪除");
+            }
+        }
+
+        // 儲存至 localStorage
+        function saveRecords() {
+            localStorage.setItem('seqwhite_records', JSON.stringify(records));
+        }
+
+        // 匯出 JSON 資料備份
+        function exportData() {
+            if (records.length === 0) {
+                alert("目前尚無資料可匯出！");
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(records, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `SEQWHITE_STUDIO_Accounting_${formatDate(new Date())}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+
+            showToast("已下載 JSON 備份檔");
+        }
+
+        // 匯入 JSON 資料備份
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        if (confirm(`確認匯入 ${imported.length} 筆歷史紀錄？這將與現有紀錄合併。`)) {
+                            // 簡易去重合併
+                            const existingIds = new Set(records.map(r => r.id));
+                            let addCount = 0;
+                            imported.forEach(item => {
+                                if (item.id && item.date && item.name) {
+                                    if (!existingIds.has(item.id)) {
+                                        records.push(item);
+                                        addCount++;
+                                    }
+                                }
+                            });
+                            saveRecords();
+                            renderCalendar();
+                            renderDailyRecords();
+                            renderAllRecords();
+                            renderReports();
+                            showToast(`成功匯入 ${addCount} 筆資料！`);
+                        }
+                    } else {
+                        alert("檔案格式不符，請上傳有效的備份 JSON 檔案。");
+                    }
+                } catch (err) {
+                    alert("讀取檔案失敗，請確保為標準 JSON 格式。");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 顯示 Toast 訊息
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // HTML 轉義防止 XSS
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
